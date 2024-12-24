@@ -7,8 +7,6 @@ from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv())
 
-
-
 # Database connection details (replace with your actual credentials)
 DB_PARAMS = {
     "host": os.getenv("DB_HOST"),

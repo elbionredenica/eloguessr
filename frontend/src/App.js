@@ -5,7 +5,6 @@ import './styles.css';
 const App = () => {
   return (
     <div className="app-container">
-      <h1>Guess the Elo</h1>
       <Game />
     </div>
   );

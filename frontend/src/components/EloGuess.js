@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 
-const EloGuess = ({ whiteElo, blackElo, onGuess }) => {
+const EloGuess = ({ onGuess, disabled }) => {
   const [whiteGuess, setWhiteGuess] = useState("");
   const [blackGuess, setBlackGuess] = useState("");
-  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
 
   const handleSubmit = () => {
@@ -21,7 +20,6 @@ const EloGuess = ({ whiteElo, blackElo, onGuess }) => {
     }
 
     setError(null);
-    setSubmitted(true);
     onGuess(whiteGuessNum, blackGuessNum);
   };
 
@@ -36,7 +34,7 @@ const EloGuess = ({ whiteElo, blackElo, onGuess }) => {
         <div className="guess-input">
           <label
             htmlFor="white-guess"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-gray-200"
           >
             White Elo:
           </label>
@@ -45,14 +43,14 @@ const EloGuess = ({ whiteElo, blackElo, onGuess }) => {
             type="number"
             value={whiteGuess}
             onChange={(e) => setWhiteGuess(e.target.value)}
-            disabled={submitted}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
+            disabled={disabled}
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-800"
           />
         </div>
         <div className="guess-input">
           <label
             htmlFor="black-guess"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-gray-200"
           >
             Black Elo:
           </label>
@@ -61,15 +59,15 @@ const EloGuess = ({ whiteElo, blackElo, onGuess }) => {
             type="number"
             value={blackGuess}
             onChange={(e) => setBlackGuess(e.target.value)}
-            disabled={submitted}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2"
+            disabled={disabled}
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-800"
           />
         </div>
       </div>
       <div className="mt-4 flex justify-center">
         <button
           onClick={handleSubmit}
-          disabled={submitted}
+          disabled={disabled}
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         >
           Submit Guess

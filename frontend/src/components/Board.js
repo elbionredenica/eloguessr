@@ -1,35 +1,19 @@
-// src/components/Board.js
 import React, { useState, useEffect } from "react";
 import Chessboard from "chessboardjsx";
 import { Chess } from "chess.js";
 
-const Board = ({ gameDetails }) => {
+const Board = ({ gameDetails, moveNumber, flipped }) => {
   const [fen, setFen] = useState("start");
-  const [moveNumber, setMoveNumber] = useState(0);
+
+  useEffect(() => {
+    const newFen = calculateFen(gameDetails.moves, moveNumber);
+    setFen(newFen);
+  }, [moveNumber, gameDetails]);
 
   useEffect(() => {
     // Reset to the starting position when a new game is loaded
     setFen("start");
-    setMoveNumber(0);
   }, [gameDetails]);
-
-  const handleMoveForward = () => {
-    if (moveNumber < gameDetails.moves.length) {
-      setMoveNumber(moveNumber + 1);
-      // Update FEN based on the next move
-      const newFen = calculateFen(gameDetails.moves, moveNumber + 1);
-      setFen(newFen);
-    }
-  };
-
-  const handleMoveBackward = () => {
-    if (moveNumber > 0) {
-      setMoveNumber(moveNumber - 1);
-      // Update FEN based on the previous move
-      const newFen = calculateFen(gameDetails.moves, moveNumber - 1);
-      setFen(newFen);
-    }
-  };
 
   const calculateFen = (moves, upToMove) => {
     const chess = new Chess();
@@ -40,31 +24,166 @@ const Board = ({ gameDetails }) => {
   };
 
   return (
-    <div className="flex justify-center items-center">
-      <div className="board-container">
-        <Chessboard
-          position={fen}
-          onPieceClick={() => {
-            alert("Moving pieces is not allowed!");
-          }}
-        />
-        <div className="mt-4 flex justify-center gap-4">
-          <button
-            onClick={handleMoveBackward}
-            disabled={moveNumber === 0}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Prev
-          </button>
-          <button
-            onClick={handleMoveForward}
-            disabled={moveNumber === gameDetails.moves.length}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Next
-          </button>
-        </div>
-      </div>
+    <div className="board-container">
+      <Chessboard
+        position={fen}
+        // onPieceClick={() => {
+        //   alert("Moving pieces is not allowed!");
+        // }}
+        allowDrag={() => false}
+        transitionDuration={150}
+        orientation={flipped ? "black" : "white"}
+        boardStyle={{
+          borderRadius: "5px",
+          boxShadow: `0 5px 15px rgba(0, 0, 0, 0.5)`,
+        }}
+        pieces={{
+          wK: ({ squareWidth, isDragging }) => (
+            <img
+              style={{
+                width: isDragging ? squareWidth * 1.75 : squareWidth,
+                height: isDragging ? squareWidth * 1.75 : squareWidth,
+              }}
+              src={
+                "https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg"
+              }
+              alt={"white king"}
+            />
+          ),
+          wQ: ({ squareWidth, isDragging }) => (
+            <img
+              style={{
+                width: isDragging ? squareWidth * 1.75 : squareWidth,
+                height: isDragging ? squareWidth * 1.75 : squareWidth,
+              }}
+              src={
+                "https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg"
+              }
+              alt={"white queen"}
+            />
+          ),
+          wR: ({ squareWidth, isDragging }) => (
+            <img
+              style={{
+                width: isDragging ? squareWidth * 1.75 : squareWidth,
+                height: isDragging ? squareWidth * 1.75 : squareWidth,
+              }}
+              src={
+                "https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg"
+              }
+              alt={"white rook"}
+            />
+          ),
+          wB: ({ squareWidth, isDragging }) => (
+            <img
+              style={{
+                width: isDragging ? squareWidth * 1.75 : squareWidth,
+                height: isDragging ? squareWidth * 1.75 : squareWidth,
+              }}
+              src={
+                "https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg"
+              }
+              alt={"white bishop"}
+            />
+          ),
+          wN: ({ squareWidth, isDragging }) => (
+            <img
+              style={{
+                width: isDragging ? squareWidth * 1.75 : squareWidth,
+                height: isDragging ? squareWidth * 1.75 : squareWidth,
+              }}
+              src={
+                "https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg"
+              }
+              alt={"white knight"}
+            />
+          ),
+          wP: ({ squareWidth, isDragging }) => (
+            <img
+              style={{
+                width: isDragging ? squareWidth * 1.75 : squareWidth,
+                height: isDragging ? squareWidth * 1.75 : squareWidth,
+              }}
+              src={
+                "https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg"
+              }
+              alt={"white pawn"}
+            />
+          ),
+          bK: ({ squareWidth, isDragging }) => (
+            <img
+              style={{
+                width: isDragging ? squareWidth * 1.75 : squareWidth,
+                height: isDragging ? squareWidth * 1.75 : squareWidth,
+              }}
+              src={
+                "https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg"
+              }
+              alt={"black king"}
+            />
+          ),
+          bQ: ({ squareWidth, isDragging }) => (
+            <img
+              style={{
+                width: isDragging ? squareWidth * 1.75 : squareWidth,
+                height: isDragging ? squareWidth * 1.75 : squareWidth,
+              }}
+              src={
+                "https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg"
+              }
+              alt={"black queen"}
+            />
+          ),
+          bR: ({ squareWidth, isDragging }) => (
+            <img
+              style={{
+                width: isDragging ? squareWidth * 1.75 : squareWidth,
+                height: isDragging ? squareWidth * 1.75 : squareWidth,
+              }}
+              src={
+                "https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg"
+              }
+              alt={"black rook"}
+            />
+          ),
+          bB: ({ squareWidth, isDragging }) => (
+            <img
+              style={{
+                width: isDragging ? squareWidth * 1.75 : squareWidth,
+                height: isDragging ? squareWidth * 1.75 : squareWidth,
+              }}
+              src={
+                "https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg"
+              }
+              alt={"black bishop"}
+            />
+          ),
+          bN: ({ squareWidth, isDragging }) => (
+            <img
+              style={{
+                width: isDragging ? squareWidth * 1.75 : squareWidth,
+                height: isDragging ? squareWidth * 1.75 : squareWidth,
+              }}
+              src={
+                "https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg"
+              }
+              alt={"black knight"}
+            />
+          ),
+          bP: ({ squareWidth, isDragging }) => (
+            <img
+              style={{
+                width: isDragging ? squareWidth * 1.75 : squareWidth,
+                height: isDragging ? squareWidth * 1.75 : squareWidth,
+              }}
+              src={
+                "https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg"
+              }
+              alt={"black pawn"}
+            />
+          ),
+        }}
+      />
     </div>
   );
 };
