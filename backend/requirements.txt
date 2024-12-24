@@ -1,0 +1,9 @@
+fastapi[all]
+uvicorn[standard]
+python-chess
+psycopg2-binary
+sqlalchemy
+python-dotenv
+pytest
+requests
+fastapi-cors
