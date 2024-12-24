@@ -3,14 +3,20 @@ import psycopg2
 import os
 import argparse
 from datetime import datetime
+from dotenv import load_dotenv, find_dotenv
+
+load_dotenv(find_dotenv())
+
+
 
 # Database connection details (replace with your actual credentials)
 DB_PARAMS = {
-    "host": "localhost",  # e.g., "localhost" or your cloud DB host
-    "database": "chess_games",
-    "user": "chess_user",
-    "password": "Elbioni#123",
+    "host": os.getenv("DB_HOST"),
+    "database": os.getenv("DB_NAME"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD")
 }
+
 
 def get_db_connection():
     """Establishes a connection to the PostgreSQL database."""
@@ -22,12 +28,14 @@ def get_db_connection():
         print(f"Error connecting to database: {e}")
     return conn
 
+
 def parse_date(date_str):
     """Parses a date string in YYYY.MM.DD format to a date object."""
     try:
         return datetime.strptime(date_str, "%Y.%m.%d").date()
     except ValueError:
         return None
+
 
 def insert_game_data(conn, pgn_file):
     """Parses a PGN file and inserts game data into the database."""
@@ -77,6 +85,7 @@ def insert_game_data(conn, pgn_file):
                 print(f"An unexpected error occurred: {e}")
                 # Handle other unexpected errors
 
+
 def main():
     parser = argparse.ArgumentParser(description="Load Lichess PGN data into PostgreSQL database.")
     parser.add_argument("pgn_file", help="Path to the PGN file to load.")
@@ -99,6 +108,7 @@ def main():
         if conn:
             conn.close()
             print("Database connection closed.")
+
 
 if __name__ == "__main__":
     main()
