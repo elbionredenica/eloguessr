@@ -1,27 +1,44 @@
-import axios from 'axios';
-
-const API_URL = 'http://0.0.0.0:8000';
+const API_BASE_URL = "http://localhost:8000";
 
 export const getRandomGame = async () => {
-  try {
-    const response = await axios.get(`${API_URL}/games/random`);
-    // Or using fetch:
-    // const response = await fetch(`${API_URL}/games/random`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching random game:', error);
-    throw error;
+  const response = await fetch(`${API_BASE_URL}/games/random`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch random game");
   }
+  return response.json();
 };
 
-export const getGameDetails = async (gameId) => {
-  try {
-    const response = await axios.get(`${API_URL}/games/${gameId}`);
-    // Or using fetch:
-    // const response = await fetch(`${API_URL}/games/${gameId}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching details for game ${gameId}:`, error);
-    throw error;
+export const getMoveData = async (game_uuid, move_number) => {
+  const response = await fetch(
+    `${API_BASE_URL}/games/${game_uuid}/move/${move_number}`
+  );
+  if (!response.ok) {
+    throw new Error("Failed to fetch move data");
   }
+  return response.json();
+};
+
+export const submitGuess = async (game_uuid, whiteGuess, blackGuess) => {
+  const response = await fetch(`${API_BASE_URL}/games/${game_uuid}/guess`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      white_guess: whiteGuess,
+      black_guess: blackGuess,
+    }),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to submit guess");
+  }
+  return response.json();
+};
+
+export const getElo = async (game_uuid) => {
+  const response = await fetch(`${API_BASE_URL}/games/${game_uuid}/elo`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch Elo");
+  }
+  return response.json();
 };

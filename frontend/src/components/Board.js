@@ -1,39 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Chessboard from "chessboardjsx";
-import { Chess } from "chess.js";
 
-const Board = ({ gameDetails, moveNumber, flipped }) => {
-  const [fen, setFen] = useState("start");
-
-  useEffect(() => {
-    const newFen = calculateFen(gameDetails.moves, moveNumber);
-    setFen(newFen);
-  }, [moveNumber, gameDetails]);
-
-  useEffect(() => {
-    // Reset to the starting position when a new game is loaded
-    setFen("start");
-  }, [gameDetails]);
-
-  const calculateFen = (moves, upToMove) => {
-    const chess = new Chess();
-    for (let i = 0; i < upToMove; i++) {
-      chess.move(moves[i].san);
-    }
-    return chess.fen();
-  };
-
+const Board = ({ fen, flipped, transitionDuration }) => {
   return (
     <div className="board-container">
       <Chessboard
         position={fen}
         allowDrag={() => false}
-        transitionDuration={150}
         orientation={flipped ? "black" : "white"}
         boardStyle={{
           borderRadius: "5px",
           boxShadow: `0 5px 15px rgba(0, 0, 0, 0.5)`,
         }}
+        lightSquareStyle={{ backgroundColor: "rgba(150, 180, 255, 0.5)" }}
+        darkSquareStyle={{ backgroundColor: "rgba(50, 80, 155, 0.6)" }}
+        transitionDuration={transitionDuration}
         pieces={{
           wK: ({ squareWidth, isDragging }) => (
             <img

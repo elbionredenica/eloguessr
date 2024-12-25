@@ -1,9 +1,14 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend import models, schemas
 from backend.database import get_db
-from backend.services.game_service import get_random_game, get_game_details_by_id
+from backend.services.game_service import (
+    get_initial_game_data,
+    verify_elo_guess,
+    get_elo_by_uuid
+)
+import uuid
 
 router = APIRouter(
     prefix="/games",
@@ -11,19 +16,42 @@ router = APIRouter(
 )
 
 
-@router.get("/random", response_model=schemas.Game)
+@router.get("/random", response_model=schemas.InitialGameData)
 async def get_random_game_endpoint(db: Session = Depends(get_db)):
-    """Retrieves a random game from the database."""
-    game = get_random_game(db)
-    if game is None:
+    """Retrieves initial data for a random game."""
+    initial_data = get_initial_game_data(db)
+    if initial_data is None:
         raise HTTPException(status_code=404, detail="No games found")
-    return game
+    return initial_data
 
 
-@router.get("/{game_id}", response_model=schemas.GameDetails)
-async def get_game_details_endpoint(game_id: int, db: Session = Depends(get_db)):
-    """Retrieves details for a specific game."""
-    game_details = get_game_details_by_id(db, game_id)
-    if game_details is None:
+@router.post("/{game_uuid}/guess", response_model=schemas.Score)
+async def verify_guess_endpoint(
+    game_uuid: str, elo_guess: schemas.EloGuess, db: Session = Depends(get_db)
+):
+    """Verifies the Elo guess and returns the score."""
+    try:
+        game_id = uuid.UUID(game_uuid)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid game UUID")
+
+    score = verify_elo_guess(db, game_id, elo_guess)
+    if score is None:
         raise HTTPException(status_code=404, detail="Game not found")
-    return game_details
+
+    return {"score": score}
+
+
+@router.get("/{game_uuid}/elo", response_model=schemas.EloReveal)
+async def get_elo_endpoint(game_uuid: str, db: Session = Depends(get_db)):
+    """Retrieves the Elo ratings for a game after the guess is made."""
+    try:
+        game_id = uuid.UUID(game_uuid)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid game UUID")
+
+    elo_reveal = get_elo_by_uuid(db, game_id)
+    if elo_reveal is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    return elo_reveal

@@ -1,112 +1,94 @@
 import chess.pgn
-import psycopg2
 import os
-import argparse
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from database.models import Base, Game
+from dotenv import load_dotenv
+import uuid
 from datetime import datetime
-from dotenv import load_dotenv, find_dotenv
 
-load_dotenv(find_dotenv())
+load_dotenv()
 
-# Database connection details (replace with your actual credentials)
-DB_PARAMS = {
-    "host": os.getenv("DB_HOST"),
-    "database": os.getenv("DB_NAME"),
-    "user": os.getenv("DB_USER"),
-    "password": os.getenv("DB_PASSWORD")
-}
+DB_HOST = os.getenv("DB_HOST")
+DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Create tables if they don't exist
+Base.metadata.create_all(bind=engine)
 
 
-def get_db_connection():
-    """Establishes a connection to the PostgreSQL database."""
-    conn = None
+def load_games_from_pgn(pgn_file):
+    db = SessionLocal()
     try:
-        conn = psycopg2.connect(**DB_PARAMS)
-        print("Database connection established.")
-    except Exception as e:
-        print(f"Error connecting to database: {e}")
-    return conn
-
-
-def parse_date(date_str):
-    """Parses a date string in YYYY.MM.DD format to a date object."""
-    try:
-        return datetime.strptime(date_str, "%Y.%m.%d").date()
-    except ValueError:
-        return None
-
-
-def insert_game_data(conn, pgn_file):
-    """Parses a PGN file and inserts game data into the database."""
-    with open(pgn_file) as f:
-        while True:
-            try:
+        with open(pgn_file) as f:
+            while True:
                 game = chess.pgn.read_game(f)
                 if game is None:
-                    break  # End of file
+                    break
 
                 headers = game.headers
-                white_elo = int(headers.get("WhiteElo", 0))  # Default to 0 if not present
-                black_elo = int(headers.get("BlackElo", 0))
-                game_date = parse_date(headers.get("Date", ""))
-                
-                with conn.cursor() as cur:
-                    cur.execute(
-                        """
-                        INSERT INTO games (pgn, white_elo, black_elo, event, site, game_date, white_player, black_player, result, utc_date, utc_time, eco, termination)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (game_id) DO NOTHING; 
-                        """,
-                        (
-                            str(game),
-                            white_elo,
-                            black_elo,
-                            headers.get("Event", ""),
-                            headers.get("Site", ""),
-                            game_date,
-                            headers.get("White", ""),
-                            headers.get("Black", ""),
-                            headers.get("Result", ""),
-                            headers.get("UTCDate", ""),
-                            headers.get("UTCTime", ""),
-                            headers.get("ECO", ""),
-                            headers.get("Termination", ""),
-                        ),
-                    )
-                    conn.commit()
-            except UnicodeDecodeError as e:
-                print(f"Skipping game due to UnicodeDecodeError: {e}")
-                # You might want to log the file position or game details for later inspection
-            except ValueError as e:
-                print(f"Skipping game due to ValueError during parsing: {e}")
-                # Handle other potential parsing errors
-            except Exception as e:
-                print(f"An unexpected error occurred: {e}")
-                # Handle other unexpected errors
+                game_uuid = uuid.uuid4()
 
+                # Handle unknown date format
+                game_date_str = headers.get("Date")
+                if game_date_str == "????.??.??":
+                    game_date = None
+                else:
+                    try:
+                        game_date = datetime.strptime(game_date_str, "%Y.%m.%d").date()
+                    except ValueError:
+                        print(f"Warning: Invalid date format for game: {game_uuid}")
+                        game_date = None
 
-def main():
-    parser = argparse.ArgumentParser(description="Load Lichess PGN data into PostgreSQL database.")
-    parser.add_argument("pgn_file", help="Path to the PGN file to load.")
-    args = parser.parse_args()
+                # Handle non-numeric Elo ratings
+                def parse_elo(elo_str):
+                    try:
+                        return int(elo_str)
+                    except ValueError:
+                        return 0  # Or None if you prefer to store NULLs
 
-    pgn_file = args.pgn_file
+                white_elo = parse_elo(headers.get("WhiteElo", "0"))
+                black_elo = parse_elo(headers.get("BlackElo", "0"))
 
-    if not os.path.isfile(pgn_file):
-        print(f"Error: File not found: {pgn_file}")
-        return
+                db_game = Game(
+                    game_uuid=game_uuid,
+                    pgn=str(game),
+                    white_elo=white_elo,  # Use parsed Elo or default
+                    black_elo=black_elo,  # Use parsed Elo or default
+                    event=headers.get("Event", ""),
+                    site=headers.get("Site", ""),
+                    game_date=game_date,
+                    white_player=headers.get("White", ""),
+                    black_player=headers.get("Black", ""),
+                    result=headers.get("Result", ""),
+                    utc_date=headers.get("UTCDate", ""),
+                    utc_time=headers.get("UTCTime", ""),
+                    eco=headers.get("ECO", ""),
+                    termination=headers.get("Termination", ""),
+                )
 
-    conn = get_db_connection()
-    if conn is None:
-        return
-
-    try:
-        insert_game_data(conn, pgn_file)
-        print(f"Successfully loaded data from {pgn_file}")
+                db.add(db_game)
+                db.commit()
+                print(f"Game {game_uuid} added to the database.")
+    except Exception as e:
+        db.rollback()
+        print(f"Error loading games: {e}")
     finally:
-        if conn:
-            conn.close()
-            print("Database connection closed.")
+        db.close()
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    if len(sys.argv) != 2:
+        print("Usage: python load_pgn.py <filename.pgn>")
+        sys.exit(1)
+
+    pgn_file = sys.argv[1]
+    load_games_from_pgn(pgn_file)
