@@ -92,7 +92,7 @@ const Footer = () => {
               )!
             </p>
             <p className="mb-4">
-              This project was inspired by{" "}
+              This project was partially inspired by{" "}
               <a
                 href="https://jackli.gg/chessle"
                 target="_blank"
@@ -102,8 +102,8 @@ const Footer = () => {
                 Jack Li's Chessle
               </a>{" "}
               <FontAwesomeIcon icon={faExternalLinkAlt} className="text-xs" />.
-              While he had the awesome idea of guessing game Elo ratings, I
-              thought, "Why not try to guess the players' Elo?" (and the website seemed to not be maintained) 🤔 So, here we
+              While he also had the awesome idea of guessing game Elo ratings, I
+              thought, "Why not try to guess the players' Elo?" (and their website seemed to not be maintained) 🤔 So, here we
               are!
             </p>
             <p className="mb-4">
