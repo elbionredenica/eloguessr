@@ -1,12 +1,12 @@
-# ♟️ Guess the Elo ♟️
+# ♟️ RatingGuessr ♟️
 
-A fun and challenging web application where you can test your chess skills by guessing the Elo ratings of players based on a game!
+A fun and challenging web application where you can test your chess skills by guessing the Elo ratings of players based on their games!
 
 **Live Demo:** [Insert link to your deployed app here, if available]
 
 ## ✨ Overview
 
-This project is a full-stack web application built with **React** on the frontend and **FastAPI** on the backend. It uses a database of chess games from [Lichess.org](https://lichess.org/) to present you with a random game, move by move. Your task is to analyze the game and guess the Elo ratings of both the white and black players.
+This project is a full-stack web application built with **React** on the frontend and **FastAPI** on the backend. It uses a database of chess games from [Lichess.org](https://lichess.org/) to present you with a random game, move by move. Your task is to analyze the game and guess the Elo ratings of both the white and black players. After each game you can share on your socials how well you did!
 
 💡 **How it Works:**
 
@@ -14,56 +14,60 @@ This project is a full-stack web application built with **React** on the fronten
 2. You see the chessboard and can navigate through the moves of the game.
 3. After observing the game, you enter your Elo guesses for the white and black players.
 4. The app reveals the actual Elo ratings and calculates your score based on the accuracy of your guesses.
+5. **Share your score!** You can copy your results to your clipboard and share your score on social media.
 
 ## 🌟 Features
 
 *   **Engaging Gameplay:** Test your chess knowledge and intuition by analyzing real games.
+*   **Social Sharing:** Share your scores with your friends and followers on social media!
 *   **Slick and Minimalistic UI:** A clean and user-friendly interface built with Tailwind CSS.
-*   **Responsive Design:**  Plays well on desktop and mobile devices.
-*   **Error Handling:**  Provides helpful feedback for invalid input or network issues.
-*   **Scoring System:**  Tracks your performance and challenges you to improve.
-*   **Backend API:**  A robust FastAPI backend handles game retrieval and data processing.
+*   **Responsive Design:** Plays well on desktop and mobile devices.
+*   **Error Handling:** Provides helpful feedback for invalid input or network issues.
+*   **Scoring System:** Tracks your performance and challenges you to improve.
+*   **Backend API:** A robust FastAPI backend handles game retrieval and data processing.
 *   **PostgreSQL Database:** Stores a large dataset of Lichess games for a wide variety of gameplay.
-*   **Continuous Improvement:**  Future enhancements planned, including time-based scoring, difficulty levels, and more!
+*   **Continuous Improvement:** Future enhancements planned, including time-based scoring, difficulty levels, and more!
 
 ## 🗂️ Project Structure
 
 This repository contains both the frontend and backend code:
 
 ```
-guess-the-elo/
-├── app/                 # Backend (FastAPI)
-│   ├── __init__.py      # Makes the 'app' directory a Python package
-│   ├── database.py      # Database connection and setup using SQLAlchemy
-│   ├── main.py          # Main FastAPI application file (entry point)
-│   ├── models.py        # SQLAlchemy database models (defining the 'games' table)
-│   ├── routers/         # API endpoints (organized by resource)
-│   │   ├── __init__.py
-│   │   └── games.py     # Endpoints related to games (/games, /games/{game_id})
-│   ├── schemas.py       # Pydantic models for request/response validation and documentation
-│   └── services/        # Business logic (functions that interact with the database)
-│       ├── __init__.py
-│       └── game_service.py # Functions for retrieving random games and game details
-├── guess-the-elo-frontend/   # Frontend (React)
-│   ├── public/          # Static assets (HTML, icons, etc.)
-│   │   └── index.html   # Main HTML template for the React app
-│   ├── src/             # Source code for the React application
-│   │   ├── components/  # Reusable UI components
-│   │   │   ├── Game.js    # Main component for game display, logic, and state
-│   │   │   ├── Board.js   # Renders the chessboard using chessboardjsx
-│   │   │   └── EloGuess.js# Handles Elo input, submission, and validation
-│   │   ├── App.js       # Main application component (root of the component tree)
-│   │   ├── index.js     # Entry point for the React application
-│   │   └── api.js       # Functions for making API requests to the backend
-│   ├── package.json     # Frontend dependencies and build scripts
-│   └── ...              # Other React-related files (e.g., configuration)
-├── .env                 # Environment variables (for sensitive data like database credentials - keep this out of version control!)
-├── .gitignore           # Specifies files and folders to be ignored by Git
-├── load_pgn.py          # Python script to load PGN data into the PostgreSQL database
-├── requirements.txt     # Backend Python dependencies
-├── tailwind.config.js   # Tailwind CSS configuration file
-└── ...                  # Other project files (e.g., README.md, LICENSE)
+rating-guessr/
+├── app/ # Backend (FastAPI)
+│ ├── init.py # Makes the 'app' directory a Python package
+│ ├── database.py # Database connection and setup using SQLAlchemy
+│ ├── main.py # Main FastAPI application file (entry point)
+│ ├── models.py # SQLAlchemy database models (defining the 'games' table)
+│ ├── routers/ # API endpoints (organized by resource)
+│ │ ├── init.py
+│ │ └── games.py # Endpoints related to games (/games, /games/{game_id})
+│ ├── schemas.py # Pydantic models for request/response validation and documentation
+│ └── services/ # Business logic (functions that interact with the database)
+│ ├── init.py
+│ └── game_service.py # Functions for retrieving random games and game details
+├── rating-guessr-frontend/ # Frontend (React)
+│ ├── public/ # Static assets (HTML, icons, etc.)
+│ │ └── index.html # Main HTML template for the React app
+│ ├── src/ # Source code for the React application
+│ │ ├── components/ # Reusable UI components
+│ │ │ ├── Game.js # Main component for game display, logic, state, and sharing
+│ │ │ ├── Board.js # Renders the chessboard using chessboardjsx
+│ │ │ ├── EloGuess.js# Handles Elo input, submission, and validation
+│ │ │ └── Modal.js # Modal component for "About" and "Support" info
+│ │ ├── App.js # Main application component (root of the component tree)
+│ │ ├── index.js # Entry point for the React application
+│ │ └── api.js # Functions for making API requests to the backend
+│ ├── package.json # Frontend dependencies and build scripts
+│ └── ... # Other React-related files (e.g., configuration)
+├── .env # Environment variables (for sensitive data like database credentials - keep this out of version control!)
+├── .gitignore # Specifies files and folders to be ignored by Git
+├── load_pgn.py # Python script to load PGN data into the PostgreSQL database
+├── requirements.txt # Backend Python dependencies
+├── tailwind.config.js # Tailwind CSS configuration file
+└── ... # Other project files (e.g., README.md, LICENSE)
 ```
+
 
 ## 🛠️ Setup and Installation
 
@@ -79,7 +83,7 @@ guess-the-elo/
 
     ```bash
     git clone <repository-url>
-    cd guess-the-elo
+    cd rating-guessr
     ```
 
 2. **Backend Setup:**
@@ -126,9 +130,9 @@ guess-the-elo/
         *   Make sure your PostgreSQL server is running.
         *   Run the following command in your terminal:
 
-        ```bash
-        python app/main.py
-        ```
+            ```bash
+            python app/main.py
+            ```
 
         (This will execute `Base.metadata.create_all(bind=engine)` which creates the necessary tables).
 
@@ -148,7 +152,7 @@ guess-the-elo/
     *   Navigate to the frontend directory:
 
         ```bash
-        cd guess-the-elo-frontend
+        cd rating-guessr-frontend
         ```
 
     *   Install dependencies:
@@ -175,7 +179,7 @@ guess-the-elo/
 2. **Start the Frontend Development Server:**
 
     *   Open a new terminal window or tab.
-    *   Navigate to the frontend directory: `cd guess-the-elo-frontend`
+    *   Navigate to the frontend directory: `cd rating-guessr-frontend`
     *   Run:
 
         ```bash
@@ -202,8 +206,6 @@ guess-the-elo/
 *   **Time-Based Scoring:** Incorporate the time taken to guess into the scoring algorithm.
 *   **Difficulty Levels:** Allow users to select different difficulty levels, perhaps by filtering games based on Elo ranges.
 *   **User Accounts:** Implement user accounts to track progress, save scores, and enable leaderboards.
-*   **Advanced Game Analysis:** Provide more in-depth analysis of the game, such as engine evaluations or common opening variations.
-*   **Mobile App:** Develop a mobile app version for on-the-go gameplay.
 
 ## 🤝 Contributing
 

@@ -1,11 +1,18 @@
 import React, { useState } from "react";
 
-const EloGuess = ({ onGuess, disabled }) => {
-  const [whiteGuess, setWhiteGuess] = useState("");
-  const [blackGuess, setBlackGuess] = useState("");
+const EloGuess = ({
+  onGuess,
+  disabled,
+  whiteGuess,
+  blackGuess,
+  setWhiteGuess,
+  setBlackGuess,
+}) => {
   const [error, setError] = useState(null);
 
-  const handleSubmit = () => {
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
     const whiteGuessNum = parseInt(whiteGuess);
     const blackGuessNum = parseInt(blackGuess);
 
@@ -20,60 +27,66 @@ const EloGuess = ({ onGuess, disabled }) => {
     }
 
     setError(null);
-    onGuess(whiteGuessNum, blackGuessNum);
+    onGuess(whiteGuess, blackGuess);
   };
 
   return (
-    <div className="elo-guess">
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-          {error}
+    <form onSubmit={handleSubmit} className="w-full">
+      {" "}
+      {/* Form container */}
+      <div className="flex flex-col items-center gap-4">
+        {" "}
+        {/* Main container */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative w-full max-w-md">
+            {error}
+          </div>
+        )}
+        <div className="flex justify-center gap-4 w-full max-w-md">
+          {" "}
+          {/* Input container */}
+          <div className="guess-input flex-1">
+            <label
+              htmlFor="white-guess"
+              className="block text-sm font-medium text-gray-200 text-center"
+            >
+              White Elo:
+            </label>
+            <input
+              id="white-guess"
+              type="number"
+              value={whiteGuess}
+              onChange={(e) => setWhiteGuess(e.target.value)}
+              disabled={disabled}
+              className="mt-1 block w-full border-none bg-gray-700 text-gray-200 px-3 py-2 rounded-md shadow-sm text-center focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            />
+          </div>
+          <div className="guess-input flex-1">
+            <label
+              htmlFor="black-guess"
+              className="block text-sm font-medium text-gray-200 text-center"
+            >
+              Black Elo:
+            </label>
+            <input
+              id="black-guess"
+              type="number"
+              value={blackGuess}
+              onChange={(e) => setBlackGuess(e.target.value)}
+              disabled={disabled}
+              className="mt-1 block w-full border-none bg-gray-700 text-gray-200 px-3 py-2 rounded-md shadow-sm text-center focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            />
+          </div>
         </div>
-      )}
-      <div className="flex gap-4">
-        <div className="guess-input">
-          <label
-            htmlFor="white-guess"
-            className="block text-sm font-medium text-gray-200"
-          >
-            White Elo:
-          </label>
-          <input
-            id="white-guess"
-            type="number"
-            value={whiteGuess}
-            onChange={(e) => setWhiteGuess(e.target.value)}
-            disabled={disabled}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-800"
-          />
-        </div>
-        <div className="guess-input">
-          <label
-            htmlFor="black-guess"
-            className="block text-sm font-medium text-gray-200"
-          >
-            Black Elo:
-          </label>
-          <input
-            id="black-guess"
-            type="number"
-            value={blackGuess}
-            onChange={(e) => setBlackGuess(e.target.value)}
-            disabled={disabled}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 text-gray-800"
-          />
-        </div>
-      </div>
-      <div className="mt-4 flex justify-center">
         <button
-          onClick={handleSubmit}
+          type="submit"
           disabled={disabled}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className="w-full max-w-md bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-bold py-2 px-6 rounded-lg transition duration-200"
         >
-          Submit Guess
+          <span className="mr-2">🤔</span> Submit Guess
         </button>
       </div>
-    </div>
+    </form>
   );
 };
 

@@ -27,9 +27,6 @@ const Board = ({ gameDetails, moveNumber, flipped }) => {
     <div className="board-container">
       <Chessboard
         position={fen}
-        // onPieceClick={() => {
-        //   alert("Moving pieces is not allowed!");
-        // }}
         allowDrag={() => false}
         transitionDuration={150}
         orientation={flipped ? "black" : "white"}

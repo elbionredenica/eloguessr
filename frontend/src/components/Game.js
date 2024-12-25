@@ -10,7 +10,10 @@ import {
   faFastBackward,
   faFastForward,
   faSyncAlt,
+  faTrophy,
+  faShareAlt,
 } from "@fortawesome/free-solid-svg-icons";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Game = () => {
   const [gameId, setGameId] = useState(null);
@@ -21,8 +24,11 @@ const Game = () => {
   const [showElo, setShowElo] = useState(false);
   const [moveNumber, setMoveNumber] = useState(0);
   const [flipped, setFlipped] = useState(false);
-  const [showSubmit, setShowSubmit] = useState(true);
-  const [showGameInfo, setShowGameInfo] = useState(false);
+  const [guessed, setGuessed] = useState(false);
+  const [whiteGuess, setWhiteGuess] = useState("");
+  const [blackGuess, setBlackGuess] = useState("");
+  const [shareText, setShareText] = useState("");
+  const [showShareSuccess, setShowShareSuccess] = useState(false);
 
   useEffect(() => {
     const fetchNewGame = async () => {
@@ -63,22 +69,23 @@ const Game = () => {
   const handleGuess = (whiteGuess, blackGuess) => {
     if (!gameDetails) return;
 
-    const whiteElo = gameDetails.game.white_elo;
-    const blackElo = gameDetails.game.black_elo;
+    const whiteElo = parseInt(gameDetails.game.white_elo);
+    const blackElo = parseInt(gameDetails.game.black_elo);
+    const whiteGuessNum = parseInt(whiteGuess);
+    const blackGuessNum = parseInt(blackGuess);
 
-    const whiteDiff = Math.abs(whiteElo - whiteGuess);
-    const blackDiff = Math.abs(blackElo - blackGuess);
+    const whiteDiff = Math.abs(whiteElo - whiteGuessNum);
+    const blackDiff = Math.abs(blackElo - blackGuessNum);
 
-    const guessScore = calculateScore(whiteDiff, blackDiff);
-    setScore(guessScore);
+    const newScore = Math.max(0, 1000 - (whiteDiff + blackDiff));
+
+    setScore(newScore);
     setShowElo(true);
-    setShowSubmit(false);
-    setShowGameInfo(true);
-  };
+    setGuessed(true);
 
-  const calculateScore = (whiteDiff, blackDiff) => {
-    const maxScore = 1000;
-    return Math.max(0, maxScore - (whiteDiff + blackDiff));
+    // Generate share text after guess
+    const resultText = `I scored ${newScore}/1000 on RatingGuessr! I guessed ${whiteGuessNum} for White (actual: ${whiteElo}) and ${blackGuessNum} for Black (actual: ${blackElo}). Try it out: [your app link here] #RatingGuessr`;
+    setShareText(resultText);
   };
 
   const handleMoveForward = () => {
@@ -110,22 +117,22 @@ const Game = () => {
   };
 
   const handleNewGame = async () => {
-    setIsLoading(true);
     setError(null);
+    setGuessed(false);
+    setShowElo(false);
+    setIsLoading(true);
+    setGameDetails(null);
+    setScore(0);
+    setMoveNumber(0);
+    setFlipped(false);
+    setWhiteGuess("");
+    setBlackGuess("");
+
     try {
       const randomGame = await getRandomGame();
       setGameId(randomGame.game_id);
-      setGameDetails(null);
-      setScore(0);
-      setShowElo(false);
-      setMoveNumber(0);
-      setFlipped(false);
-      setShowSubmit(true);
-      setShowGameInfo(false);
     } catch (err) {
       setError("Failed to fetch a new game.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -136,71 +143,122 @@ const Game = () => {
       R: "♖",
       B: "♗",
       N: "♘",
-      P: "♙",
+      "": "♙",
     };
 
-    let notation = "";
+    const pgn = gameDetails?.game?.pgn;
+    if (!pgn) {
+      return "";
+    }
+
+    const moves = pgn
+      .replace(/\[.*?\]/g, "")
+      .replace(/\d+\./g, "")
+      .trim()
+      .split(/\s+/);
+
+    let moveStr = "";
     if (index % 2 === 0) {
-      notation += `${Math.ceil((index + 1) / 2)}. `;
+      moveStr += `${Math.ceil((index + 1) / 2)}. `;
     }
 
-    const piece = move.san.charAt(0);
+    const fullMove = moves[index];
+    const piece = fullMove[0];
+
     if (pieceIcons[piece]) {
-      notation += pieceIcons[piece];
+      moveStr += pieceIcons[piece];
+      moveStr += fullMove.slice(1);
+    } else if (fullMove.startsWith("O-O")) {
+      moveStr += fullMove;
     } else {
-      notation += "♙";
+      moveStr += pieceIcons[""];
+      moveStr += fullMove;
     }
+    return moveStr;
+  };
 
-    notation += move.san.slice(pieceIcons[piece] ? 1 : 0);
-
-    return notation;
+  const handleCopyShareText = () => {
+    navigator.clipboard
+      .writeText(shareText)
+      .then(() => {
+        setShowShareSuccess(true);
+        setTimeout(() => setShowShareSuccess(false), 2000); // Hide success message after 2 seconds
+      })
+      .catch((err) => {
+        console.error("Failed to copy share text:", err);
+        // Handle error, possibly show a message to the user
+      });
   };
 
   return (
-    <div className="container mx-auto p-4 text-white flex flex-col md:flex-row gap-8">
-      <div className="md:w-1/2 flex flex-col items-center">
-        {/* Chessboard */}
-        {gameDetails && (
-          <Board
-            gameDetails={gameDetails}
-            moveNumber={moveNumber}
-            flipped={flipped}
-          />
-        )}
+    <div className="container mx-auto p-4 text-white flex flex-col md:flex-row gap-8 pt-10">
+      {/* Left Panel */}
+      <div className="md:w-1/2 flex flex-col items-center justify-start">
+        {/* Board Section */}
+        <div className="flex justify-center w-full">
+          <div>
+            <AnimatePresence initial={false} mode="wait">
+              {isLoading || !gameDetails ? (
+                <motion.div
+                  key="spinner"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex items-center justify-center z-10"
+                >
+                  <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-yellow-400"></div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="board"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <Board
+                    gameDetails={gameDetails}
+                    moveNumber={moveNumber}
+                    flipped={flipped}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
 
         {/* Move Controls */}
-        <div className="mt-4 flex justify-center gap-2">
+        <div className="mt-6 flex justify-center gap-3">
           <button
             onClick={handleFlip}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
           >
             <FontAwesomeIcon icon={faSyncAlt} />
           </button>
           <button
             onClick={handleStart}
             disabled={moveNumber === 0}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50"
           >
             <FontAwesomeIcon icon={faFastBackward} />
           </button>
           <button
             onClick={handleMoveBackward}
             disabled={moveNumber === 0}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50"
           >
             <FontAwesomeIcon icon={faArrowLeft} />
           </button>
           <button
             onClick={handleMoveForward}
             disabled={!gameDetails || moveNumber === gameDetails.moves.length}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50"
           >
             <FontAwesomeIcon icon={faArrowRight} />
           </button>
           <button
             onClick={handleEnd}
             disabled={!gameDetails || moveNumber === gameDetails.moves.length}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50"
           >
             <FontAwesomeIcon icon={faFastForward} />
           </button>
@@ -208,16 +266,16 @@ const Game = () => {
 
         {/* Move List */}
         {gameDetails && (
-          <div className="mt-4 w-full overflow-auto">
-            <div className="flex flex-wrap justify-center gap-1">
+          <div className="mt-4 overflow-auto max-h-24">
+            <div className="flex flex-wrap justify-center gap-0.5 p-2 rounded-lg bg-gray-800">
               {gameDetails.moves.map((move, index) => (
                 <button
                   key={index}
                   onClick={() => setMoveNumber(index + 1)}
-                  className={`font-bold py-1 px-2 rounded ${
+                  className={`text-sm font-medium py-0.5 px-1.5 rounded ${
                     index + 1 === moveNumber
-                      ? "bg-green-500 text-white"
-                      : "bg-gray-500 text-gray-200 hover:bg-gray-400"
+                      ? "bg-gray-600 text-white"
+                      : "bg-transparent text-gray-400 hover:bg-gray-700"
                   }`}
                 >
                   {getMoveNotation(move, index)}
@@ -228,125 +286,155 @@ const Game = () => {
         )}
       </div>
 
-      {/* Game Information and Elo Guess */}
-      <div className="md:w-1/2 flex flex-col">
-        <h1 className="text-4xl font-bold text-center mb-4">
-          <FontAwesomeIcon icon={faChess} className="mr-2" />
-          Guess the Elo
-        </h1>
-
-        {isLoading && (
-          <p className="text-center animate-pulse text-blue-500">
-            Loading...
-          </p>
-        )}
-
-        {error && <p className="text-center text-red-500">{error}</p>}
-
-        {/* Instructions */}
-        <div className="p-4 rounded-lg">
-          <h2 className="text-xl font-semibold mb-2">Instructions</h2>
-          <p>
-            Analyze the chess game and guess the Elo ratings of both the white
-            and black players. Your score will be calculated based on the
-            accuracy of your guesses.
-          </p>
-        </div>
-
-        {/* Elo Guess Input */}
-        <div className="mt-4">
-          <EloGuess
-            whiteElo={gameDetails?.game.white_elo}
-            blackElo={gameDetails?.game.black_elo}
-            onGuess={handleGuess}
-            disabled={!showSubmit}
-          />
-        </div>
-
-        {/* Submit Guess Button */}
-        {showSubmit && (
-          <div className="mt-4 flex justify-center">
-            <button
-              onClick={() => setShowSubmit(false)}
-              disabled={!showSubmit}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      {/* Right Panel */}
+      <div className="md:w-1/2 flex flex-col items-center">
+        <motion.div
+          className="w-full max-w-[500px] h-full flex flex-col"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Dynamic vertical centering for initial state */}
+          <div
+            className={`flex-grow flex flex-col ${
+              !guessed ? "justify-center" : ""
+            }`}
+          >
+            {/* Title */}
+            <motion.h1
+              className="text-5xl font-bold text-center mb-6 flex items-center justify-center"
+              layout
             >
-              Submit Guess
-            </button>
-          </div>
-        )}
+              <FontAwesomeIcon
+                icon={faChess}
+                className="mr-3 text-yellow-400"
+              />
+              RatingGuessr
+              <FontAwesomeIcon
+                icon={faTrophy}
+                className="ml-3 text-yellow-400"
+              />
+            </motion.h1>
 
-        {/* Game Information (hidden initially) */}
-        {showGameInfo && gameDetails && (
-          <div className="p-4 rounded-lg">
-            <h2 className="text-xl font-semibold mb-2">Game Information</h2>
-            <p>
-              <span className="font-semibold">Event:</span>{" "}
-              {gameDetails.game.event}
-            </p>
-            <p>
-              <span className="font-semibold">Site:</span>{" "}
-              {gameDetails.game.site}
-            </p>
-            <p>
-              <span className="font-semibold">Date:</span>{" "}
-              {gameDetails.game.game_date}
-            </p>
-            <p>
-              <span className="font-semibold">White:</span>{" "}
-              {gameDetails.game.white_player}
-            </p>
-            <p>
-              <span className="font-semibold">Black:</span>{" "}
-              {gameDetails.game.black_player}
-            </p>
-          </div>
-        )}
+            {/* Instructions */}
+            <motion.div
+              layout
+              className="p-6 rounded-xl bg-gray-800 text-center mb-6"
+            >
+              <h2 className="text-2xl font-semibold mb-3">
+                <span className="text-yellow-400">💡</span> How to Play
+              </h2>
+              <p className="text-gray-300">
+                Watch the game and guess both players' Elo ratings. The closer
+                your guesses, the higher your score!{" "}
+                <span className="text-yellow-400">🎯</span>
+              </p>
+            </motion.div>
 
-        {/* Results (hidden initially) */}
-        {showElo && (
-          <div className="text-center mt-4">
-            <p className="text-lg font-semibold">
-              White Elo:{" "}
-              <span className="text-yellow-400">
-                {gameDetails.game.white_elo}
-              </span>
-            </p>
-            <p className="text-lg font-semibold">
-              Black Elo:{" "}
-              <span className="text-yellow-400">
-                {gameDetails.game.black_elo}
-              </span>
-            </p>
-            <p className="text-lg font-semibold">
-              Your Score:{" "}
-              <span className="text-green-500">{score} / 1000</span>
-            </p>
-            <p className="mt-4">
-              <a
-                href={`https://lichess.org/${gameDetails.game.game_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:underline"
+            {/* Score Display */}
+            {guessed && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 text-center"
               >
-                View Game on Lichess
-              </a>
-            </p>
-          </div>
-        )}
+                <h2 className="text-3xl font-bold text-yellow-400 mb-2">
+                  Score
+                </h2>
+                <div className="text-5xl font-bold bg-gray-800 rounded-xl p-4">
+                  <span className="text-green-400">{score}</span>
+                  <span className="text-gray-400">/1000</span>
+                </div>
+              </motion.div>
+            )}
 
-        {/* New Game Button */}
-        {!showSubmit && (
-          <div className="mt-4 flex justify-center">
-            <button
-              onClick={handleNewGame}
-              disabled={isLoading}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            >
-              New Game
-            </button>
+            {/* Elo Guess Form - Hide after submission */}
+            {!guessed && (
+              <motion.div layout className="mb-6">
+                <EloGuess
+                  onGuess={handleGuess}
+                  disabled={guessed}
+                  whiteGuess={whiteGuess}
+                  blackGuess={blackGuess}
+                  setWhiteGuess={setWhiteGuess}
+                  setBlackGuess={setBlackGuess}
+                />
+              </motion.div>
+            )}
+
+            {/* Game Information */}
+            {guessed && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-6 rounded-xl bg-gray-800 text-center mb-6"
+              >
+                <h2 className="text-2xl font-semibold mb-4">
+                  <span className="text-yellow-400">♟️</span> Players
+                </h2>
+                <div className="space-y-3">
+                  <div className="p-3 rounded-lg bg-gray-700">
+                    <p className="text-lg">
+                      <span className="font-semibold text-white">White:</span>{" "}
+                      {gameDetails.game.white_player}{" "}
+                      <span className="text-yellow-400 font-bold">
+                        ({gameDetails.game.white_elo})
+                      </span>
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-gray-700">
+                    <p className="text-lg">
+                      <span className="font-semibold text-white">Black:</span>{" "}
+                      {gameDetails.game.black_player}{" "}
+                      <span className="text-yellow-400 font-bold">
+                        ({gameDetails.game.black_elo})
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* View on Lichess, Play Again, and Share Buttons */}
+            {guessed && (
+              <div className="flex flex-col gap-4 w-full">
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                      onClick={handleNewGame}
+                      disabled={isLoading}
+                      className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg transition duration-200"
+                    >
+                      <span className="mr-2">🔄</span>
+                      Play Again
+                  </button>
+                  <a
+                    href={gameDetails.game.site}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg transition duration-200 text-center"
+                  >
+                    <span className="mr-2">🔍</span>
+                    View on Lichess
+                  </a>
+                </div>
+                <div>
+                  <button
+                    onClick={handleCopyShareText}
+                    className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 flex items-center justify-center"
+                  >
+                    <FontAwesomeIcon icon={faShareAlt} className="mr-2" />
+                    Share Score
+                  </button>
+                  {showShareSuccess && (
+                    <div className="mt-2 text-green-400">
+                      Copied to clipboard!
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </motion.div>
       </div>
     </div>
   );
