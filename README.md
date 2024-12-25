@@ -44,8 +44,8 @@ rating-guessr/
 │ │ └── games.py # Endpoints related to games (/games, /games/{game_id})
 │ ├── schemas.py # Pydantic models for request/response validation and documentation
 │ └── services/ # Business logic (functions that interact with the database)
-│ ├── init.py
-│ └── game_service.py # Functions for retrieving random games and game details
+│ | ├── init.py
+│ | └── game_service.py # Functions for retrieving random games and game details
 ├── rating-guessr-frontend/ # Frontend (React)
 │ ├── public/ # Static assets (HTML, icons, etc.)
 │ │ └── index.html # Main HTML template for the React app
@@ -211,15 +211,60 @@ rating-guessr/
 
 Contributions are welcome! If you have ideas for improvements or bug fixes, please feel free to open an issue or submit a pull request.
 
+### Best Practices for Contributions
+
+To keep the codebase clean, organized, and easy to navigate, follow these best practices when naming branches and commits:
+
+#### Branch Naming
+
+* Use **descriptive and concise names** that reflect the purpose of the branch.
+
+Examples:
+* `feature/add-user-authentication`
+* `bugfix/fix-chessboard-render-issue`
+* `hotfix/update-readme`
+
+Common branch types:
+* **feature/**: New features or enhancements.
+* **bugfix/**: Fixes for known bugs.
+* **hotfix/**: Critical fixes requiring immediate attention.
+* **refactor/**: Code improvements without changing functionality.
+* **docs/**: Updates to documentation.
+* **test/**: Adding or improving tests.
+
+#### Commit Message Guidelines
+
+* Write **clear and meaningful messages** that explain what the commit does.
+
+Example: `fix: resolve broken API endpoint for game retrieval`
+
+**Types** commonly used in commit messages:
+* `feat`: Adding a new feature.
+* `fix`: Fixing a bug.
+* `refactor`: Code restructuring or optimization.
+* `docs`: Documentation updates.
+* `test`: Adding or updating tests.
+* `chore`: Minor tasks like dependency updates or formatting changes.
+
+* Include a **body** (optional) for more detailed explanations, especially for non-trivial changes.
+* Use the **imperative mood** (e.g., "Add tests" instead of "Added tests").
+
+#### Example Commit Messages
+
+* `feat: add Elo guess input validation on frontend`
+* `fix: correct database connection issue in production`
+* `docs: update README with installation instructions`
+* `refactor: simplify chessboard rendering logic`
+* `test: add tests for game service functions`
+
+By following these best practices, you'll help ensure that contributions are easier to review and maintain!
+
+
 ## 🙏 Acknowledgements
 
 *   [Lichess.org](https://lichess.org/) for providing the open game database.
-*   [React](https://reactjs.org/) for the frontend framework.
-*   [FastAPI](https://fastapi.tiangolo.com/) for the backend framework.
-*   [Tailwind CSS](https://tailwindcss.com/) for styling.
 *   [chessboardjsx](https://github.com/willb335/chessboardjsx) for the chessboard component.
 *   [chess.js](https://github.com/jhlywa/chess.js) for chess logic.
-*   [react-dnd](https://react-dnd.github.io/react-dnd/) for drag-and-drop functionality.
 
 ## 📝 License
 
