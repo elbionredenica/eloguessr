@@ -17,15 +17,15 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Add SSH private key to agent
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/id_ed25519
+       env:
+         SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+       run: |
+         mkdir -p ~/.ssh
+         ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
+         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+         chmod 600 ~/.ssh/id_ed25519
+         eval "$(ssh-agent -s)"
+         ssh-add - <<< "${{ secrets.SSH_PASSPHRASE }}" ~/.ssh/id_ed25519
 
       - name: Build Docker images
         run: |
