@@ -1,12 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.database import engine, get_db
+from backend.database import engine, get_db, create_tables
 from backend.routers import games
 from backend import models
 from backend.database import Base
+import os
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+create_tables()
 
 app = FastAPI()
 
@@ -27,8 +27,10 @@ app.add_middleware(
 # Include routers
 app.include_router(games.router)
 
-# Include routers
-app.include_router(games.router)
+
+@app.get("/")
+async def root():
+    return {"message": "Hello from FastAPI!"}
 
 
 @app.on_event("startup")

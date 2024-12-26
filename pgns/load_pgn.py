@@ -2,7 +2,7 @@ import chess.pgn
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from database.models import Base, Game
+from models import Base, Game
 from dotenv import load_dotenv
 import uuid
 from datetime import datetime

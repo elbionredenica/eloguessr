@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "";
 
 export const getRandomGame = async () => {
   const response = await fetch(`${API_BASE_URL}/games/random`);
