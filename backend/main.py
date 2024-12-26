@@ -1,9 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.database import engine, get_db, create_tables
+from backend.database import Base, engine, get_db, create_tables
 from backend.routers import games
 from backend import models
-from backend.database import Base
 import os
 
 create_tables()
