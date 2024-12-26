@@ -21,9 +21,11 @@ jobs:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
           ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519_temp
           chmod 600 ~/.ssh/id_ed25519_temp
+          pkill -f ssh-agent  # Kill existing agents
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_ed25519_temp
 
@@ -47,7 +49,7 @@ jobs:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
           scp -o StrictHostKeyChecking=no -r ./* root@${{ secrets.DROPLET_IP }}:/root/rating-guessr
-          ssh -o StrictHostKeyChecking=no -v root@${{ secrets.DROPLET_IP }} << EOF
+          ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} << EOF
             cd /root/rating-guessr
             docker compose down --volumes
             docker compose up -d --build
