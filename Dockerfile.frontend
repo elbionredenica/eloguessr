@@ -2,7 +2,7 @@ FROM node:16-alpine AS build
 
 WORKDIR /frontend
 
-COPY frontend/package*.json frontend/yarn.lock ./
+COPY frontend/package*.json
 
 RUN npm install
 
