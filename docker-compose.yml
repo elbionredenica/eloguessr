@@ -46,6 +46,7 @@ services:
       - "3000:3000"
     environment:
       - FRONTEND_API_BASE_URL=/api
+      - REACT_APP_API_BASE_URL=/api
     networks:
       - app_net
 
