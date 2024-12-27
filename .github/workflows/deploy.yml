@@ -42,16 +42,11 @@ jobs:
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
-      - name: Deploy to DigitalOcean
+      - name: Test SSH Connection
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-          scp -o StrictHostKeyChecking=no -r ./* root@${{ secrets.DROPLET_IP }}:/root/rating-guessr
-          ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_IP }} << EOF
-            cd /root/rating-guessr
-            docker compose down --volumes
-            docker compose up -d --build
-          EOF
+          ssh -o StrictHostKeyChecking=no -v root@${{ secrets.DROPLET_IP }} "echo 'Successfully connected!'"
 
       - name: Clean up
         run: |
