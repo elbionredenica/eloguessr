@@ -1,12 +1,13 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from backend import models, schemas
 from backend.database import get_db
 from backend.services.game_service import (
     get_initial_game_data,
     verify_elo_guess,
-    get_elo_by_uuid
+    get_elo_by_uuid,
+    get_move_times_by_game_uuid,
 )
 import uuid
 
@@ -55,3 +56,18 @@ async def get_elo_endpoint(game_uuid: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Game not found")
 
     return elo_reveal
+
+
+@router.get("/{game_uuid}/times", response_model=List[schemas.MoveTime])
+async def get_move_times_endpoint(game_uuid: str, db: Session = Depends(get_db)):
+    """Retrieves the move times for a specific game."""
+    try:
+        game_id = uuid.UUID(game_uuid)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid game UUID")
+
+    move_times = get_move_times_by_game_uuid(db, game_id)
+    if move_times is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    return move_times

@@ -120,3 +120,11 @@ class EloReveal(BaseModel):
     white_player: str
     black_player: str
     lichess_url: Optional[str]
+
+
+class MoveTime(BaseModel):
+    """Model for a move time in a game"""
+    move_number: int
+    white_time: Optional[str] = None
+    black_time: Optional[str] = None
+    think_time: Optional[str] = None
