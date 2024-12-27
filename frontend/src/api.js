@@ -1,5 +1,4 @@
-// const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "/api";
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "/api";
 
 export const getRandomGame = async () => {
   const response = await fetch(`${API_BASE_URL}/games/random`);
@@ -40,6 +39,14 @@ export const getElo = async (game_uuid) => {
   const response = await fetch(`${API_BASE_URL}/games/${game_uuid}/elo`);
   if (!response.ok) {
     throw new Error("Failed to fetch Elo");
+  }
+  return response.json();
+};
+
+export const getMoveTimes = async (game_uuid) => {
+  const response = await fetch(`${API_BASE_URL}/games/${game_uuid}/times`);
+  if (!response.ok) {
+      throw new Error("Failed to fetch move times");
   }
   return response.json();
 };

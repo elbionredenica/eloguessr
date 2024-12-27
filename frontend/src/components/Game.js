@@ -1,9 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  getRandomGame,
-  submitGuess,
-  getElo,
-} from "../api";
+import { getRandomGame, submitGuess, getElo, getMoveTimes } from "../api";
 import Board from "./Board";
 import EloGuess from "./EloGuess";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -19,6 +15,19 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { Chess } from "chess.js";
+
+// Clock component for displaying the time
+const Clock = ({ time, isWhite }) => {
+  return (
+    <div
+      className={`clock text-center p-2 rounded-lg mb-1 w-[120px] ${
+        isWhite ? "bg-white text-black" : "bg-black text-white"
+      }`}
+    >
+      <span className="font-bold text-xl">{time}</span>
+    </div>
+  );
+};
 
 const Game = () => {
   const [gameUuid, setGameUuid] = useState(null);
@@ -41,7 +50,22 @@ const Game = () => {
   const [whitePlayer, setWhitePlayer] = useState(null);
   const [blackPlayer, setBlackPlayer] = useState(null);
   const [moveList, setMoveList] = useState([]);
+  const [moveTimes, setMoveTimes] = useState([]);
   const initialDataFetched = useRef(false);
+  const [whiteTime, setWhiteTime] = useState(null);
+  const [blackTime, setBlackTime] = useState(null);
+
+  // Helper function to format time
+  const formatTime = (timeStr) => {
+    if (!timeStr) return "00:00";
+    const [hours, minutes, seconds] = timeStr.split(":").map(Number);
+    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
+  };
 
   const fetchNewGame = async () => {
     setIsLoading(true);
@@ -63,6 +87,18 @@ const Game = () => {
       setWhitePlayer(null);
       setBlackPlayer(null);
       setMoveList(initialData.move_list);
+
+      // Fetch move times and initialize clocks
+      if (initialData.game_uuid) {
+        const times = await getMoveTimes(initialData.game_uuid);
+        setMoveTimes(times);
+        if (times.length > 0) {
+          setWhiteTime(formatTime(times[0].white_time));
+          setBlackTime(
+            formatTime(times[0].black_time || times[1]?.black_time || null)
+          );
+        }
+      }
     } catch (err) {
       setError("Failed to fetch a new game.");
     } finally {
@@ -71,16 +107,39 @@ const Game = () => {
   };
 
   useEffect(() => {
-      const fetchInitialData = async () => {
-        if (!initialDataFetched.current) {
-          // Fetch initial data
-          fetchNewGame();
-          initialDataFetched.current = true; // Set the ref to true after fetching
-        }
-      };
+    const fetchInitialData = async () => {
+      if (!initialDataFetched.current) {
+        // Fetch initial data
+        fetchNewGame();
+        initialDataFetched.current = true; // Set the ref to true after fetching
+      }
+    };
 
-      fetchInitialData();
+    fetchInitialData();
   }, []);
+
+  // Update clocks after each move
+  useEffect(() => {
+    if (moveTimes && moveTimes.length > 0) {
+      if (moveNumber % 2 === 1) {
+        // White's move
+        const moveTime = moveTimes.find(
+          (mt) => mt.move_number === moveNumber
+        );
+        if (moveTime) {
+          setWhiteTime(formatTime(moveTime.white_time));
+        }
+      } else if (moveNumber > 0) {
+        // Black's move
+        const moveTime = moveTimes.find(
+          (mt) => mt.move_number === moveNumber
+        );
+        if (moveTime) {
+          setBlackTime(formatTime(moveTime.black_time));
+        }
+      }
+    }
+  }, [moveNumber, moveTimes]);
 
   // Use chess.js to update FEN based on moveNumber
   useEffect(() => {
@@ -168,6 +227,20 @@ const Game = () => {
     <div className="container mx-auto p-4 text-white flex flex-col md:flex-row gap-8 pt-10">
       {/* Left Panel */}
       <div className="md:w-1/2 flex flex-col items-center justify-start">
+        {/* Clocks Section */}
+        <div className="flex justify-center w-full gap-4 mb-1">
+          {!flipped ? (
+            <>
+              <Clock time={blackTime} isWhite={false} />
+              <Clock time={whiteTime} isWhite={true} />
+            </>
+          ) : (
+            <>
+              <Clock time={whiteTime} isWhite={true} />
+              <Clock time={blackTime} isWhite={false} />
+            </>
+          )}
+        </div>
         {/* Board Section */}
         <div className="flex justify-center w-full">
           <div>
@@ -238,19 +311,45 @@ const Game = () => {
         {
           <div className="mt-4 overflow-auto max-h-24 w-full">
             <div className="flex flex-wrap justify-center gap-0.5 p-2 rounded-lg bg-gray-800">
-              {moveList.map((move, index) => (
-                <button
-                  onClick={() => setMoveNumber(index + 1)}
-                  key={index}
-                  className={`text-sm font-medium py-0.5 px-1.5 rounded ${
-                    index + 1 === moveNumber
-                      ? "bg-gray-600 text-white"
-                      : "bg-transparent text-gray-400 hover:bg-gray-700"
-                  }`}
-                >
-                  {move}
-                </button>
-              ))}
+              {moveList.map((move, index) => {
+                const moveTime = moveTimes.find((mt) => mt.move_number === index + 1);
+                let displayThinkTime = "";
+          
+                if (moveTime) {
+                  if (index % 2 === 0 && moveTime.think_time) {
+                    displayThinkTime = moveTime.think_time.split(".")[0]; // Remove milliseconds
+                  } else if (index % 2 !== 0 && moveTime.think_time) {
+                    displayThinkTime = moveTime.think_time.split(".")[0]; // Remove milliseconds
+                  }
+          
+                  // Format to "3s" if less than a minute
+                  const seconds = parseInt(displayThinkTime.split(":").pop()); // Get seconds part
+                  if (seconds < 60 && !displayThinkTime.startsWith("00:00:")) {
+                      displayThinkTime = `${seconds}s`;
+                  } else if (displayThinkTime.startsWith("00:")) {
+                      displayThinkTime = displayThinkTime.slice(3); // Remove leading "00:"
+                  }
+                }
+
+                return (
+                  <button
+                    onClick={() => setMoveNumber(index + 1)}
+                    key={index}
+                    className={`text-sm font-medium py-0.5 px-1.5 rounded ${
+                      index + 1 === moveNumber
+                        ? "bg-gray-600 text-white"
+                        : "bg-transparent text-gray-400 hover:bg-gray-700"
+                    }`}
+                  >
+                    {move}
+                    {displayThinkTime && (
+                      <span className="text-xs text-gray-500 ml-1">
+                        ({displayThinkTime})
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         }
