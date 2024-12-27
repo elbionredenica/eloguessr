@@ -7,8 +7,7 @@ This is the `dev` branch of the EloGuessr project. It's used for active developm
 *   **Branching:** Create new branches off `dev` for each feature or bug fix. Use the naming conventions outlined in the main README.
 *   **Testing:** Thoroughly test your code before creating a pull request.
 *   **Pull Requests:** Submit pull requests to merge changes from your feature branches into `dev`.
-*   **Code Review:** All pull requests should be reviewed by at least one other developer before merging.
-*   **Deployment to Staging (Optional):** You can set up a separate staging environment (e.g., a separate DigitalOcean droplet) to test deployments from the `dev` branch before deploying to production.
+*   **Code Review:** All pull requests should be reviewed before merging.
 
 ## Running the Application Locally
 
