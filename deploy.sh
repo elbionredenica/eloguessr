@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Navigate to your project directory
-cd rating-guessr
+cd /root/rating-guessr
 
 # Stop and remove existing containers and volumes
-docker compose down --volumes
+docker compose down -v  # Use -v instead of --volumes
 
 # Pull the latest changes from Git
 git pull origin main
 
 # Build new images and start containers
-docker compose up -d --build
+docker compose up --build -d  # Use --build before -d
