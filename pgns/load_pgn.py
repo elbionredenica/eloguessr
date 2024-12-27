@@ -1,8 +1,10 @@
 import chess.pgn
 import psycopg2
+from psycopg2.extras import execute_values
 import uuid
 import sys
 import time
+import re
 from dotenv import load_dotenv
 import os
 
@@ -35,6 +37,25 @@ def get_elo_bucket(elo):
         return 8
 
 
+def format_time(time_str):
+    """Formats the time string to an interval."""
+    try:
+        # Handle cases with single-digit hours
+        parts = time_str.split(':')
+        if len(parts) == 3:
+          hours, minutes, seconds = map(int, parts)
+        elif len(parts) == 2:
+          hours = 0
+          minutes, seconds = map(int, parts)
+        else:
+          print(f"Error formatting time: {time_str}")
+          return None
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+    except ValueError:
+        print(f"Error formatting time: {time_str}")
+        return None
+
+
 def load_games(pgn_file, db_connection):
     pgn = open(pgn_file)
 
@@ -42,7 +63,8 @@ def load_games(pgn_file, db_connection):
     target_count = 10000  # Target number of games per bucket
     max_diff = 250 # Maximum allowed Elo difference
     batch_size = 1000 # Size of batch insert
-    batch = []
+    games_batch = []
+    times_batch = []
 
     while True:
         try:
@@ -69,10 +91,11 @@ def load_games(pgn_file, db_connection):
             elo_diff = abs(white_elo - black_elo)
 
             if bucket_counts[bucket] < target_count and elo_diff <= max_diff:
-                # Add game to batch
-                batch.append(
+                game_uuid = str(uuid.uuid4())
+                # Add game data to games_batch
+                games_batch.append(
                     (
-                        uuid.uuid4(),
+                        game_uuid,
                         str(game),
                         white_elo,
                         black_elo,
@@ -89,22 +112,49 @@ def load_games(pgn_file, db_connection):
                     )
                 )
 
-                if len(batch) >= batch_size:
-                    # Insert batch into database
-                    insert_games(db_connection, batch)
-                    bucket_counts[bucket] += len(batch)
-                    print(f"Inserted batch of {len(batch)} games. Current count for bucket {bucket}: {bucket_counts[bucket]}")
-                    batch = [] # Clear the batch
+                # Extract move times
+                node = game
+                move_number = 0
+                while True:
+                    next_node = node.variations[0] if node.variations else None
+                    if next_node is None:
+                        break
+
+                    comment = next_node.comment
+                    time_match = re.search(r"\[%clk (\d+(:\d+){1,2})\]", comment) # Regex for pattern
+                    if time_match:
+                        move_number += 1
+                        time_str = time_match.group(1)
+                        if move_number % 2 == 1:  # White's move
+                            white_time = format_time(time_str)
+                            black_time = None
+                        else:  # Black's move
+                            black_time = format_time(time_str)
+                            white_time = None
+
+                        if white_time or black_time:
+                            times_batch.append((game_uuid, move_number, white_time, black_time))
+                    node = next_node
+
+                if len(games_batch) >= batch_size:
+                    # Insert batches into the database
+                    insert_games(db_connection, games_batch)
+                    insert_move_times(db_connection, times_batch)
+                    bucket_counts[bucket] += len(games_batch)
+                    print(f"Inserted batch of {len(games_batch)} games and their move times into bucket {bucket}. Count: {bucket_counts[bucket]}")
+                    games_batch = [] # Clear the batches
+                    times_batch = []
 
         except UnicodeDecodeError as e:
             print(f"Skipping game due to UnicodeDecodeError: {e}")
             continue
 
-    # Insert any remaining games in the last batch
-    if batch:
-        insert_games(db_connection, batch)
-        bucket_counts[bucket] += len(batch)
-        print(f"Inserted last batch of {len(batch)} games. Current count for bucket {bucket}: {bucket_counts[bucket]}")
+    # Insert any remaining games and times in the last batch
+    if games_batch:
+        insert_games(db_connection, games_batch)
+        insert_move_times(db_connection, times_batch)
+        bucket_counts[bucket] += len(games_batch)
+        print(f"Inserted last batch of {len(games_batch)} games and their move times into bucket {bucket}. Count: {bucket_counts[bucket]}")
 
     print(f"Total games loaded: {sum(bucket_counts.values())}")
     db_connection.close()
@@ -112,12 +162,26 @@ def load_games(pgn_file, db_connection):
 
 def insert_games(db_connection, games_batch):
     with db_connection.cursor() as cur:
-        cur.executemany(
+        execute_values(
+            cur,
             """
             INSERT INTO games (game_uuid, pgn, white_elo, black_elo, event, site, game_date, white_player, black_player, result, utc_date, utc_time, eco, termination)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES %s
             """,
             games_batch,
+        )
+        db_connection.commit()
+
+
+def insert_move_times(db_connection, times_batch):
+    with db_connection.cursor() as cur:
+        execute_values(
+            cur,
+            """
+            INSERT INTO game_move_times (game_uuid, move_number, white_time, black_time)
+            VALUES %s
+            """,
+            times_batch,
         )
         db_connection.commit()
 
