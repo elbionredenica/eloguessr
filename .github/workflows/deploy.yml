@@ -16,16 +16,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Add SSH private key to agent
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.DROPLET_IP }} >> ~/.ssh/known_hosts
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519_deploy
           chmod 600 ~/.ssh/id_ed25519_deploy
-          eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/id_ed25519_deploy
 
       - name: Build Docker images
         run: |
@@ -43,10 +39,17 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Test SSH Connection
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-          ssh -o StrictHostKeyChecking=no -v root@${{ secrets.DROPLET_IP }} "echo 'Successfully connected!'"
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519_deploy -v root@${{ secrets.DROPLET_IP }} "echo 'Successfully connected!'"
+
+      - name: Deploy to DigitalOcean
+        run: |
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519_deploy -r ./* root@${{ secrets.DROPLET_IP }}:/root/rating-guessr
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519_deploy root@${{ secrets.DROPLET_IP }} << EOF
+            cd /root/rating-guessr
+            docker compose down --volumes
+            docker compose up -d --build
+          EOF
 
       - name: Clean up
         run: |
