@@ -4,6 +4,10 @@ A fun and challenging web application where you can test your chess skills by gu
 
 🔸 **STATUS:** INITIAL RELEASE 🔸
 
+**First on the to-do list: Add more (normalized\*) data.**
+
+*\*normalized in this context would mean equal probabilities for different ranges of ELOs to be picked randomly, given the skewness on Lichess*
+
 ## ✨ Overview
 
 This project is a full-stack web application built with **React** on the frontend and **FastAPI** on the backend. It uses a database of chess games from [Lichess.org](https://lichess.org/) to present you with a random game, move by move. Your task is to analyze the game and guess the Elo ratings of both the white and black players. After each game, you can share on your socials how well you did! The live version of the app can be found at [eloguessr.live](https://eloguessr.live).
