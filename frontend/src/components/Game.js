@@ -123,7 +123,7 @@ const Game = () => {
       setLichessUrl(eloData.lichess_url);
 
       // Generate share text after guess
-      const resultText = `I scored ${guessResponse.score}/1000 on RatingGuessr! I guessed ${whiteGuess} for White (actual: ${eloData.white_elo}) and ${blackGuess} for Black (actual: ${eloData.black_elo}). Try it out: [your app link here] #RatingGuessr`;
+      const resultText = `I scored ${guessResponse.score}/1000 on EloGuessr! I guessed ${whiteGuess} for White (actual: ${eloData.white_elo}) and ${blackGuess} for Black (actual: ${eloData.black_elo}). Try it out: https://eloguessr.live #EloGuessr`;
       setShareText(resultText);
     } catch (error) {
       setError("Failed to submit guess or fetch Elo.");
@@ -279,7 +279,7 @@ const Game = () => {
                 icon={faChess}
                 className="mr-3 text-yellow-400"
               />
-              RatingGuessr
+              EloGuessr
               <FontAwesomeIcon
                 icon={faTrophy}
                 className="ml-3 text-yellow-400"
