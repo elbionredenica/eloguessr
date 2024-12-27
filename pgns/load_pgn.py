@@ -1,94 +1,148 @@
 import chess.pgn
-import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from models import Base, Game
-from dotenv import load_dotenv
+import psycopg2
 import uuid
-from datetime import datetime
+import sys
+import time
+from dotenv import load_dotenv
+import os
 
 load_dotenv()
 
+# Database connection details
 DB_HOST = os.getenv("DB_HOST")
 DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
 
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+def get_elo_bucket(elo):
+    """Assigns an Elo rating to a bucket."""
+    if elo <= 1200:
+        return 1
+    elif elo <= 1400:
+        return 2
+    elif elo <= 1600:
+        return 3
+    elif elo <= 1800:
+        return 4
+    elif elo <= 2000:
+        return 5
+    elif elo <= 2200:
+        return 6
+    elif elo <= 2400:
+        return 7
+    else:
+        return 8
 
-# Create tables if they don't exist
-Base.metadata.create_all(bind=engine)
 
+def load_games(pgn_file, db_connection):
+    pgn = open(pgn_file)
 
-def load_games_from_pgn(pgn_file):
-    db = SessionLocal()
-    try:
-        with open(pgn_file) as f:
-            while True:
-                game = chess.pgn.read_game(f)
-                if game is None:
-                    break
+    bucket_counts = {i: 0 for i in range(1, 9)}  # Initialize counts for each bucket
+    target_count = 10000  # Target number of games per bucket
+    max_diff = 250 # Maximum allowed Elo difference
+    batch_size = 1000 # Size of batch insert
+    batch = []
 
-                headers = game.headers
-                game_uuid = uuid.uuid4()
+    while True:
+        try:
+            game = chess.pgn.read_game(pgn)
+            if game is None:
+                break  # End of file
 
-                # Handle unknown date format
-                game_date_str = headers.get("Date")
-                if game_date_str == "????.??.??":
-                    game_date = None
-                else:
-                    try:
-                        game_date = datetime.strptime(game_date_str, "%Y.%m.%d").date()
-                    except ValueError:
-                        print(f"Warning: Invalid date format for game: {game_uuid}")
-                        game_date = None
+            headers = game.headers
+            white_elo = headers.get("WhiteElo")
+            black_elo = headers.get("BlackElo")
 
-                # Handle non-numeric Elo ratings
-                def parse_elo(elo_str):
-                    try:
-                        return int(elo_str)
-                    except ValueError:
-                        return 0  # Or None if you prefer to store NULLs
+            if white_elo is None or black_elo is None:
+              continue
 
-                white_elo = parse_elo(headers.get("WhiteElo", "0"))
-                black_elo = parse_elo(headers.get("BlackElo", "0"))
+            try:
+                white_elo = int(white_elo)
+                black_elo = int(black_elo)
+            except ValueError:
+                print("Skipping a game with invalid elo.")
+                continue
 
-                db_game = Game(
-                    game_uuid=game_uuid,
-                    pgn=str(game),
-                    white_elo=white_elo,  # Use parsed Elo or default
-                    black_elo=black_elo,  # Use parsed Elo or default
-                    event=headers.get("Event", ""),
-                    site=headers.get("Site", ""),
-                    game_date=game_date,
-                    white_player=headers.get("White", ""),
-                    black_player=headers.get("Black", ""),
-                    result=headers.get("Result", ""),
-                    utc_date=headers.get("UTCDate", ""),
-                    utc_time=headers.get("UTCTime", ""),
-                    eco=headers.get("ECO", ""),
-                    termination=headers.get("Termination", ""),
+            avg_elo = (white_elo + black_elo) // 2
+            bucket = get_elo_bucket(avg_elo)
+            elo_diff = abs(white_elo - black_elo)
+
+            if bucket_counts[bucket] < target_count and elo_diff <= max_diff:
+                # Add game to batch
+                batch.append(
+                    (
+                        uuid.uuid4(),
+                        str(game),
+                        white_elo,
+                        black_elo,
+                        headers.get("Event"),
+                        headers.get("Site"),
+                        headers.get("Date"),
+                        headers.get("White"),
+                        headers.get("Black"),
+                        headers.get("Result"),
+                        headers.get("UTCDate"),
+                        headers.get("UTCTime"),
+                        headers.get("ECO"),
+                        headers.get("Termination"),
+                    )
                 )
 
-                db.add(db_game)
-                db.commit()
-                print(f"Game {game_uuid} added to the database.")
-    except Exception as e:
-        db.rollback()
-        print(f"Error loading games: {e}")
-    finally:
-        db.close()
+                if len(batch) >= batch_size:
+                    # Insert batch into database
+                    insert_games(db_connection, batch)
+                    bucket_counts[bucket] += len(batch)
+                    print(f"Inserted batch of {len(batch)} games. Current count for bucket {bucket}: {bucket_counts[bucket]}")
+                    batch = [] # Clear the batch
+
+        except UnicodeDecodeError as e:
+            print(f"Skipping game due to UnicodeDecodeError: {e}")
+            continue
+
+    # Insert any remaining games in the last batch
+    if batch:
+        insert_games(db_connection, batch)
+        bucket_counts[bucket] += len(batch)
+        print(f"Inserted last batch of {len(batch)} games. Current count for bucket {bucket}: {bucket_counts[bucket]}")
+
+    print(f"Total games loaded: {sum(bucket_counts.values())}")
+    db_connection.close()
+
+
+def insert_games(db_connection, games_batch):
+    with db_connection.cursor() as cur:
+        cur.executemany(
+            """
+            INSERT INTO games (game_uuid, pgn, white_elo, black_elo, event, site, game_date, white_player, black_player, result, utc_date, utc_time, eco, termination)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            games_batch,
+        )
+        db_connection.commit()
 
 
 if __name__ == "__main__":
-    import sys
-
-    if len(sys.argv) != 2:
-        print("Usage: python load_pgn.py <filename.pgn>")
+    if len(sys.argv) < 2:
+        print("Usage: python load_pgn.py <filename>.pgn")
         sys.exit(1)
 
     pgn_file = sys.argv[1]
-    load_games_from_pgn(pgn_file)
+
+    try:
+        db_connection = psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD
+        )
+        print("Successfully connected to the database!")
+    except psycopg2.OperationalError as e:
+        print(f"Error connecting to the database: {e}")
+        sys.exit(1)
+
+    start_time = time.time()
+    load_games(pgn_file, db_connection)
+    end_time = time.time()
+
+    print(f"Total time taken: {end_time - start_time:.2f} seconds")
