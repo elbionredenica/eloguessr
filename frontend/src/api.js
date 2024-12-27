@@ -42,3 +42,11 @@ export const getElo = async (game_uuid) => {
   }
   return response.json();
 };
+
+export const getMoveTimes = async (game_uuid) => {
+  const response = await fetch(`${API_BASE_URL}/games/${game_uuid}/times`);
+  if (!response.ok) {
+      throw new Error("Failed to fetch move times");
+  }
+  return response.json();
+};
