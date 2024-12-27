@@ -67,7 +67,7 @@ services:
       - app_net
 
 volumes:
-  postgres_data: 
+  postgres_data:
     driver: local
 
 networks:

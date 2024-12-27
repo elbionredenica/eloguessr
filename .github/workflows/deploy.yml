@@ -43,7 +43,7 @@ jobs:
           scp -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519_deploy -r ./* root@${{ secrets.DROPLET_IP }}:/root/rating-guessr
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519_deploy root@${{ secrets.DROPLET_IP }} << EOF
             cd /root/rating-guessr
-            docker compose down
+            docker compose down -v
             docker compose up --build -d
           EOF
 
