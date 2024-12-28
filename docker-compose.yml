@@ -38,6 +38,7 @@ services:
       dockerfile: Dockerfile.frontend
       args:
         - REACT_APP_API_BASE_URL=${FRONTEND_API_BASE_URL}
+        - REACT_APP_GA_MEASUREMENT_ID=${REACT_APP_GA_MEASUREMENT_ID}
     container_name: rating-guessr-frontend
     restart: always
     depends_on:
