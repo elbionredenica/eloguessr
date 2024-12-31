@@ -16,7 +16,7 @@ const Modal = ({ isOpen, onClose, children }) => {
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -50, opacity: 0 }}
-            className="bg-gray-800 p-6 rounded-lg shadow-lg text-gray-200 w-11/12 md:w-2/3 lg:w-1/2"
+            className="bg-gray-800 rounded-lg shadow-lg text-gray-200 w-11/12 md:w-2/3 lg:w-1/2 max-h-[90vh] overflow-y-auto p-6"
             onClick={(e) => e.stopPropagation()} // Prevent clicks within the modal from closing it
           >
             {children}

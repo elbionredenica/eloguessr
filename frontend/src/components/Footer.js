@@ -12,44 +12,76 @@ import {
   faRocket,
   faLightbulb,
   faHeart,
+  faBars
 } from "@fortawesome/free-solid-svg-icons";
 import Modal from "./Modal";
 
 const Footer = () => {
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showCoffeeModal, setShowCoffeeModal] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   return (
-    <footer className="bg-gray-800 py-4 mt-8">
-      <div className="container mx-auto px-4 text-center text-gray-300 flex justify-between items-center">
-        <div className="flex gap-4">
-          <button
-            onClick={() => setShowAboutModal(true)}
-            className="hover:text-yellow-400 transition duration-200"
+    <footer className="bg-gray-800 py-4 mt-8 sticky bottom-0 w-full">
+      <div className="container mx-auto px-4 text-center text-gray-300">
+        <div className="md:flex md:justify-between md:items-center relative">
+          {/* Hamburger Menu (Mobile) */}
+          <div className="md:hidden flex justify-between items-center w-full">
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="text-gray-300 hover:text-yellow-400 focus:outline-none"
+            >
+              <FontAwesomeIcon icon={faBars} size="lg" />
+            </button>
+            <p className="text-sm">
+              © {new Date().getFullYear()} Elbion Redenica.
+            </p>
+          </div>
+
+          {/* Links (Visible on larger screens or when menu is open) */}
+          <div
+            className={`${
+              showMenu ? "block" : "hidden"
+            } md:block absolute bottom-full w-full md:static md:w-auto mt-4 md:mt-0 bg-gray-800`}
           >
-            <FontAwesomeIcon icon={faUser} className="mr-1" />
-            About
-          </button>
-          <a
-            href="https://github.com/elbionredenica"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-yellow-400 transition duration-200"
-          >
-            <FontAwesomeIcon icon={faGithub} className="mr-1" />
-            GitHub
-          </a>
-          <button
-            onClick={() => setShowCoffeeModal(true)}
-            className="hover:text-yellow-400 transition duration-200"
-          >
-            <FontAwesomeIcon icon={faCoffee} className="mr-1" />
-            Buy Me a Coffee
-          </button>
+            <div className="flex flex-col md:flex-row gap-4">
+              <button
+                onClick={() => {
+                  setShowAboutModal(true);
+                  setShowMenu(false);
+                }}
+                className="hover:text-yellow-400 transition duration-200"
+              >
+                <FontAwesomeIcon icon={faUser} className="mr-1" />
+                About
+              </button>
+              <a
+                href="https://github.com/elbionredenica"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-yellow-400 transition duration-200"
+              >
+                <FontAwesomeIcon icon={faGithub} className="mr-1" />
+                GitHub
+              </a>
+              <button
+                onClick={() => {
+                  setShowCoffeeModal(true);
+                  setShowMenu(false);
+                }}
+                className="hover:text-yellow-400 transition duration-200"
+              >
+                <FontAwesomeIcon icon={faCoffee} className="mr-1" />
+                Buy Me a Coffee
+              </button>
+            </div>
+          </div>
+
+          {/* Copyright (Visible on larger screens) */}
+          <p className="text-sm mt-4 md:mt-0 hidden md:block">
+            © {new Date().getFullYear()} Elbion Redenica.
+          </p>
         </div>
-        <p className="text-sm">
-          © {new Date().getFullYear()} Elbion Redenica. All rights reserved.
-        </p>
 
         {/* About Me Modal */}
         <Modal isOpen={showAboutModal} onClose={() => setShowAboutModal(false)}>
