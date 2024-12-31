@@ -40,9 +40,9 @@ jobs:
 
       - name: Deploy to DigitalOcean
         run: |
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519_deploy -r ./* elbion@${{ secrets.DROPLET_IP }}:/home/elbion/rating-guessr
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519_deploy -r ./* elbion@${{ secrets.DROPLET_IP }}:/home/elbion/eloguessr
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519_deploy elbion@${{ secrets.DROPLET_IP }} << EOF
-            cd /home/elbion/rating-guessr
+            cd /home/elbion/eloguessr
             docker compose down
             docker compose up -d --build
           EOF
