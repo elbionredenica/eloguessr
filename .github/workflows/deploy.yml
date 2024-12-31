@@ -40,11 +40,11 @@ jobs:
 
       - name: Deploy to DigitalOcean
         run: |
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519_deploy -r ./* root@${{ secrets.DROPLET_IP }}:/root/rating-guessr
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519_deploy root@${{ secrets.DROPLET_IP }} << EOF
-            cd /root/rating-guessr
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519_deploy -r ./* elbion@${{ secrets.DROPLET_IP }}:/home/elbion/rating-guessr
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519_deploy elbion@${{ secrets.DROPLET_IP }} << EOF
+            cd /home/elbion/rating-guessr
             docker compose down
-            docker compose up --build -d
+            docker compose up -d --build
           EOF
 
       - name: Clean up
