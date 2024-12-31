@@ -1,22 +1,23 @@
 import React from "react";
-import Chessboard from "chessboardjsx";
+import { Chessboard } from "react-chessboard";
 
-const Board = ({ fen, flipped, transitionDuration }) => {
+const Board = ({ fen, flipped, transitionDuration, boardWidth }) => {
   return (
-    <div className="board-container">
+    <div className="board-container" style={{ width: boardWidth }}>
       <Chessboard
         position={fen}
-        allowDrag={() => false}
-        orientation={flipped ? "black" : "white"}
-        boardStyle={{
+        arePiecesDraggable={false}
+        boardOrientation={flipped ? "black" : "white"}
+        boardWidth={boardWidth} // Pass boardWidth prop here
+        customBoardStyle={{
           borderRadius: "5px",
           boxShadow: `0 5px 15px rgba(0, 0, 0, 0.5)`,
         }}
-        lightSquareStyle={{ backgroundColor: "rgba(150, 180, 255, 0.5)" }}
-        darkSquareStyle={{ backgroundColor: "rgba(50, 80, 155, 0.6)" }}
-        transitionDuration={transitionDuration}
-        pieces={{
-          wK: ({ squareWidth, isDragging }) => (
+        customLightSquareStyle={{ backgroundColor: "rgba(150, 180, 255, 0.5)" }}
+        customDarkSquareStyle={{ backgroundColor: "rgba(50, 80, 155, 0.6)" }}
+        animationDuration={transitionDuration}
+        customPieces={{
+          wK: ({ isDragging, squareWidth }) => (
             <img
               style={{
                 width: isDragging ? squareWidth * 1.75 : squareWidth,
@@ -28,7 +29,7 @@ const Board = ({ fen, flipped, transitionDuration }) => {
               alt={"white king"}
             />
           ),
-          wQ: ({ squareWidth, isDragging }) => (
+          wQ: ({ isDragging, squareWidth }) => (
             <img
               style={{
                 width: isDragging ? squareWidth * 1.75 : squareWidth,
@@ -40,7 +41,7 @@ const Board = ({ fen, flipped, transitionDuration }) => {
               alt={"white queen"}
             />
           ),
-          wR: ({ squareWidth, isDragging }) => (
+          wR: ({ isDragging, squareWidth }) => (
             <img
               style={{
                 width: isDragging ? squareWidth * 1.75 : squareWidth,
@@ -52,7 +53,7 @@ const Board = ({ fen, flipped, transitionDuration }) => {
               alt={"white rook"}
             />
           ),
-          wB: ({ squareWidth, isDragging }) => (
+          wB: ({ isDragging, squareWidth }) => (
             <img
               style={{
                 width: isDragging ? squareWidth * 1.75 : squareWidth,
@@ -64,7 +65,7 @@ const Board = ({ fen, flipped, transitionDuration }) => {
               alt={"white bishop"}
             />
           ),
-          wN: ({ squareWidth, isDragging }) => (
+          wN: ({ isDragging, squareWidth }) => (
             <img
               style={{
                 width: isDragging ? squareWidth * 1.75 : squareWidth,
@@ -76,7 +77,7 @@ const Board = ({ fen, flipped, transitionDuration }) => {
               alt={"white knight"}
             />
           ),
-          wP: ({ squareWidth, isDragging }) => (
+          wP: ({ isDragging, squareWidth }) => (
             <img
               style={{
                 width: isDragging ? squareWidth * 1.75 : squareWidth,
@@ -88,7 +89,7 @@ const Board = ({ fen, flipped, transitionDuration }) => {
               alt={"white pawn"}
             />
           ),
-          bK: ({ squareWidth, isDragging }) => (
+          bK: ({ isDragging, squareWidth }) => (
             <img
               style={{
                 width: isDragging ? squareWidth * 1.75 : squareWidth,
@@ -100,7 +101,7 @@ const Board = ({ fen, flipped, transitionDuration }) => {
               alt={"black king"}
             />
           ),
-          bQ: ({ squareWidth, isDragging }) => (
+          bQ: ({ isDragging, squareWidth }) => (
             <img
               style={{
                 width: isDragging ? squareWidth * 1.75 : squareWidth,
@@ -112,7 +113,7 @@ const Board = ({ fen, flipped, transitionDuration }) => {
               alt={"black queen"}
             />
           ),
-          bR: ({ squareWidth, isDragging }) => (
+          bR: ({ isDragging, squareWidth }) => (
             <img
               style={{
                 width: isDragging ? squareWidth * 1.75 : squareWidth,
@@ -124,7 +125,7 @@ const Board = ({ fen, flipped, transitionDuration }) => {
               alt={"black rook"}
             />
           ),
-          bB: ({ squareWidth, isDragging }) => (
+          bB: ({ isDragging, squareWidth }) => (
             <img
               style={{
                 width: isDragging ? squareWidth * 1.75 : squareWidth,
@@ -136,7 +137,7 @@ const Board = ({ fen, flipped, transitionDuration }) => {
               alt={"black bishop"}
             />
           ),
-          bN: ({ squareWidth, isDragging }) => (
+          bN: ({ isDragging, squareWidth }) => (
             <img
               style={{
                 width: isDragging ? squareWidth * 1.75 : squareWidth,
@@ -148,7 +149,7 @@ const Board = ({ fen, flipped, transitionDuration }) => {
               alt={"black knight"}
             />
           ),
-          bP: ({ squareWidth, isDragging }) => (
+          bP: ({ isDragging, squareWidth }) => (
             <img
               style={{
                 width: isDragging ? squareWidth * 1.75 : squareWidth,

@@ -13,6 +13,7 @@ import {
   faFastForward,
   faSyncAlt,
 } from "@fortawesome/free-solid-svg-icons";
+import ReactGA from 'react-ga4';
 
 library.add(
   faChess,
@@ -22,6 +23,9 @@ library.add(
   faFastForward,
   faSyncAlt
 );
+
+// Initialize Google Analytics with Measurement ID from environment variable
+ReactGA.initialize(process.env.REACT_APP_GA_MEASUREMENT_ID);
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
