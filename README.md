@@ -2,7 +2,7 @@
 
 A fun and challenging web application where you can test your chess skills by guessing the Elo ratings of players based on their games!
 
-🔸 **STATUS:** FIRST RELEASE 🔸 
+🔸 **STATUS:** FIRST RELEASE 🔸
 
 **First on the to-do list: Add more (normalized\*) data.**
 
