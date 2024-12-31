@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Navigate to your project directory
-cd /root/rating-guessr
+cd /root/eloguessr
 
 # Stop and remove existing containers and volumes
 docker compose down -v  # Use -v instead of --volumes
